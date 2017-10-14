@@ -26,7 +26,7 @@
                                     <div class="Catalogtitwo">题号：25544&nbsp;&nbsp;题型：还是得&nbsp;&nbsp;难度：订餐&nbsp;&nbsp;上传人：女性司机&nbsp;&nbsp;来源：才能使得&nbsp;&nbsp;上传时间:220255&nbsp;&nbsp;组卷次数：<em>0</em></div>
                                     <div class="Catalogcontent">
                                         <div class="Catalogcontentup">题型</div>
-                                        <div class="Catalogcontentdown"><a href="#">审核通过</a><a href="#">审核不通过</a><a href="#">删除题目</a></div>
+                                        <div class="Catalogcontentdown"><a href="#">审核通过</a><a href="#">审核不通过</a><a href="#">删除题目</a><a href="#">加入试卷</a></div>
                                     </div>
                                </div>
                                <!-- <div class="Catalog_rightnei" hidden="hidden">
@@ -99,18 +99,43 @@ $(function(){
         });
         $(".tablea").append(tr);
       });
+    
+    //通過關鍵字進行查找
+    $('.pl15').on('click',function(){
+        var input=$('.pl5 input').val();
+        $.ajax('exam/findSubject',{
+            data:{
+            keys:input
+          },
+          method:'POST',
+          'content-Type':'application/json',
+          success:function(data){
+             showData(data);
+          }
+        });
+    });
 
+    //3.點擊實現答案和解析  prop是獲取當前的元素屬性,当点击的时候追加的div1内出现answer,不点击隐藏
+    $(".Catalogtitle").find("input:checkbox").on("click",function(){
+               if($(this).prop("checked")){
+                  $(".append").show()  
+                   }else{
+                    $(".append").hide()  
+                  }
+         });
+
+    //使用事件代理绑定所有的a标签
     $(".tablea").off();
     $(".tablea").on("click","a",function(event){
-
+      //给点击的a标签中附样式
       $(this).addClass("active3").siblings().removeClass("active3");
       event.preventDefault();
+      //遍历tablea中所有可见的a标签，并找出a标签中有active3,并返回item
       var arr=$('.tablea a').filter(':visible').map(function(index,item){
           if($(item).hasClass('active3')){
             return item;
           }
       }).toArray();
-      console.log(arr);
 
       var department="";
       var  type="";
@@ -141,17 +166,61 @@ $(function(){
       data.forEach(function(item){
         var div = $('.Catalog_rightnei:hidden').clone().removeAttr('hidden');
 
+        //1.創建一個新的div1把answer顯示在新的div上
+        var div1='<div class="append" hidden="hidden">'+item.answer+'</div>';
+        
         div.find(".Catalogtitwo").html("题号:"+item.id+"&nbsp;&nbsp;题型:"+null+"&nbsp;&nbsp;难度:"+null+"&nbsp;&nbsp;上传人:"+item.user+"&nbsp;&nbsp;来源:"+null+"&nbsp;&nbsp;上传时间:"+item.uploadTime+"&nbsp;&nbsp;组卷次数:<em>0</em>");
         var stem ='<span>'+item.stem+'</span>';
         div.find('.Catalogcontentup').append(stem);
+
+//通过subject_id找到tal_exam_choice中的id 获取content中的值，并追加在Catalogcontentup中
+        var id = item.id;
+        $.ajax('exam/checkChoice',{
+          data:{
+            id:id
+          },
+          method:'POST',
+          'content-Type':'application/json',
+          success:function(data){
+             showChoice(data);
+          }
+        });
+        //获取content中的值进行遍历，判断index并给correct赋A,B,C,D,和给正确的赋颜色
+        function showChoice(data){
+          data.forEach(function(item,index){
+            var p;
+            switch(index){
+              case 0:
+                p ='<p class="'+item.correct.data[0]+'">&nbsp;&nbsp;&nbsp;A:&nbsp;'+item.content+'</p>'
+                break;
+              case 1:
+                p ='<p class="'+item.correct.data[0]+'">&nbsp;&nbsp;&nbsp;B:&nbsp;'+item.content+'</p>'
+                break;
+              case 2:
+                p ='<p class="'+item.correct.data[0]+'">&nbsp;&nbsp;&nbsp;C:&nbsp;'+item.content+'</p>'
+                break;
+              case 3:
+                p ='<p class="'+item.correct.data[0]+'">&nbsp;&nbsp;&nbsp;D:&nbsp;'+item.content+'</p>'
+                break;
+            }
+            //当correct为1的时候就为红色
+            div.find('.Catalogcontentup p.1').css('color','red');
+            div.find('.Catalogcontentup').append(p);
+          });
+          //2.把新建的div1追加在Catalogcontentup上显示出来
+          div.find('.Catalogcontentup').append(div1);
+          }
+          //三个按钮拿到Catalogcontentdown的id
         div.find('.Catalogcontentdown a').attr('id',item.id);
+
         $('.Catalog_right').append(div);       
       });
     }
-
+//给三个按钮绑定事件，获取a标签中的id，当点击三个按钮的是进行判断
     $(".Catalog").off();
     $(".Catalog").on("click","a",function(event){
-      alert($(this).attr("id"));
+      //获取subject中id值
+      // alert($(this).attr("id"));
       switch($(this).html()){
         case "审核通过":
           $.ajax('exam/checkSubject',{
@@ -163,6 +232,8 @@ $(function(){
           'content-Type':'application/json',
           success:function(){
             alert('success');
+            $('.Catalogcontentdown').find("a").hide()
+            $('.Catalogcontentdown').find("a:eq(3)").show();           
           }
         });
           break;
@@ -191,10 +262,17 @@ $(function(){
           }
         });              
           break;
-          }            
-      $(".baseUI li ul:eq(0) li:eq(0)").trigger('click');
+          } 
+      // $(".baseUI li ul:eq(0) li:eq(0)").trigger('click');
+
       event.preventDefault();
+
     });
+    
+//点击添加题目
+$('.icon_add').on('click',function(){
+ $('.editingarea').load("pages/addSubject.html");
+});
 });
       
 </script>

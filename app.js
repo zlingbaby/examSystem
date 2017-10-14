@@ -6,7 +6,7 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 
-var index = require('./routes/index');
+// var index = require('./routes/index');
 var showSubjectRoute = require('./routes/showSubjectRoute');
 
 var app = express();
@@ -23,7 +23,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 //设置路由中间件
 //首页路由
-app.use('/', index);
+// app.use('/', index);
 app.use('/exam', showSubjectRoute);
 
 
